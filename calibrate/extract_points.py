@@ -43,12 +43,23 @@ if cap.isOpened():
     
     start_brightness = get_brightness(cap)
     print "start_brightness: {}".format(start_brightness)
+    ret, bright_ref = cap.read()
     
     skip_to_brigheness(cap, start_brightness * 2.0)
     
     led_frames = get_led_frames(50)
     for led_no, frame in enumerate(get_frames(cap, led_frames)):
-        cv2.imwrite('tmp/{}.png'.format(led_no), frame)
+        # blur the frame, then find the brightest pixel
+        # halved to avoid lots of possible maximum values; we want the center
+        blurred = cv2.GaussianBlur(frame * 0.5,(5,5),0)
+        brightest = np.unravel_index(blurred.argmax(), blurred.shape)
+        brightness = blurred[brightest] * 2.0
+        brightest = (brightest[1], brightest[0]) # x then y pos
+        
+        # draw and write
+        colored = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+        cv2.circle(colored, brightest, 4, (0, 255, 0), -1)
+        cv2.imwrite('tmp/{}.png'.format(led_no), colored)
 
 cap.release()
 cv2.destroyAllWindows()
