@@ -2,6 +2,7 @@
 import numpy as np
 import cv2
 import os.path as path
+import csv
 
 def get_gray(cap):
     ret, frame = cap.read()
@@ -50,26 +51,33 @@ def get_brightest(frame):
 def run(input_file, output_file, debug_dir=None):
     cap = cv2.VideoCapture(input_file)
     assert cap.isOpened()
+    
+    writer = csv.DictWriter(open(output_file, "w"),
+            fieldnames="led x y brightness".split())
+    writer.writeheader()
 
-    if cap.isOpened():
-        get_gray(cap) # skip the first
+    get_gray(cap) # skip the first
+    
+    start_brightness = get_brightness(cap)
+    print "start_brightness: {}".format(start_brightness)
+    ret, bright_ref = cap.read()
+    
+    skip_to_brigheness(cap, start_brightness * 2.0)
+    
+    led_frames = get_led_frames(50)
+    for led_no, frame in enumerate(get_frames(cap, led_frames)):
+        brightest, brightness = get_brightest(frame)
+        writer.writerow(dict(
+            led=led_no,
+            x=brightest[0], y=brightest[1],
+            brightness=brightness))
         
-        start_brightness = get_brightness(cap)
-        print "start_brightness: {}".format(start_brightness)
-        ret, bright_ref = cap.read()
-        
-        skip_to_brigheness(cap, start_brightness * 2.0)
-        
-        led_frames = get_led_frames(50)
-        for led_no, frame in enumerate(get_frames(cap, led_frames)):
-            brightest, brightness = get_brightest(frame)
-            
-            # draw and write
-            if debug_dir is not None:
-                colored = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-                cv2.circle(colored, brightest, 5, (0, 255, 0), -1)
-                out_path = path.join(debug_dir, '{}.png'.format(led_no))
-                cv2.imwrite(out_path, colored)
+        # draw and write
+        if debug_dir is not None:
+            colored = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            cv2.circle(colored, brightest, 5, (0, 255, 0), -1)
+            out_path = path.join(debug_dir, '{}.png'.format(led_no))
+            cv2.imwrite(out_path, colored)
 
     cap.release()
 
