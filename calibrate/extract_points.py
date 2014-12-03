@@ -1,5 +1,7 @@
+#!/usr/bin/env python2
 import numpy as np
 import cv2
+import os.path as path
 
 def get_gray(cap):
     ret, frame = cap.read()
@@ -36,30 +38,47 @@ def get_frames(cap, frames):
             frameno += 1
         yield frame
 
-cap = cv2.VideoCapture('input_videos/0.mov')
+def get_brightest(frame):
+    # blur the frame, then find the brightest pixel
+    # halved to avoid lots of possible maximum values; we want the center
+    blurred = cv2.GaussianBlur(frame * 0.5,(5,5),0)
+    brightest = np.unravel_index(blurred.argmax(), blurred.shape)
+    brightness = blurred[brightest] * 2.0
+    brightest = (brightest[1], brightest[0]) # x then y pos
+    return brightest, brightness
 
-if cap.isOpened():
-    get_gray(cap) # skip the first
-    
-    start_brightness = get_brightness(cap)
-    print "start_brightness: {}".format(start_brightness)
-    ret, bright_ref = cap.read()
-    
-    skip_to_brigheness(cap, start_brightness * 2.0)
-    
-    led_frames = get_led_frames(50)
-    for led_no, frame in enumerate(get_frames(cap, led_frames)):
-        # blur the frame, then find the brightest pixel
-        # halved to avoid lots of possible maximum values; we want the center
-        blurred = cv2.GaussianBlur(frame * 0.5,(5,5),0)
-        brightest = np.unravel_index(blurred.argmax(), blurred.shape)
-        brightness = blurred[brightest] * 2.0
-        brightest = (brightest[1], brightest[0]) # x then y pos
+def run(input_file, output_file, debug_dir=None):
+    cap = cv2.VideoCapture(input_file)
+    assert cap.isOpened()
+
+    if cap.isOpened():
+        get_gray(cap) # skip the first
         
-        # draw and write
-        colored = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-        cv2.circle(colored, brightest, 4, (0, 255, 0), -1)
-        cv2.imwrite('tmp/{}.png'.format(led_no), colored)
+        start_brightness = get_brightness(cap)
+        print "start_brightness: {}".format(start_brightness)
+        ret, bright_ref = cap.read()
+        
+        skip_to_brigheness(cap, start_brightness * 2.0)
+        
+        led_frames = get_led_frames(50)
+        for led_no, frame in enumerate(get_frames(cap, led_frames)):
+            brightest, brightness = get_brightest(frame)
+            
+            # draw and write
+            if debug_dir is not None:
+                colored = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+                cv2.circle(colored, brightest, 5, (0, 255, 0), -1)
+                out_path = path.join(debug_dir, '{}.png'.format(led_no))
+                cv2.imwrite(out_path, colored)
 
-cap.release()
-cv2.destroyAllWindows()
+    cap.release()
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", help="Input video file.")
+    parser.add_argument("output", help="Output csv file.")
+    parser.add_argument("-d", "--debug_dir",
+            help="Dir to write images to with their detected points.")
+    args = parser.parse_args()
+    run(args.input, args.output, args.debug_dir)
