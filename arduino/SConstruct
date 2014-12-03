@@ -1,0 +1,9 @@
+env = Environment(tools=["default", "arduino"])
+env.ConfigureBoard("atmega328")
+
+core = env.ArduinoCore()
+serial_lib = env.ArduinoLibrary("SoftwareSerial")
+fastled = env.ArduinoLibrary("FastLED", "FastLED")
+
+calibrate = env.Sketch("calibrate", ["calibrate.cpp", serial_lib, fastled, core])
+env.Upload(calibrate, name="upload_calibrate")
