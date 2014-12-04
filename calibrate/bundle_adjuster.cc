@@ -81,14 +81,12 @@ struct SnavelyReprojectionError {
 };
 
 struct TreeProblem {
-    typedef std::array<double, 2> point;
     struct LED {
         double pos[3] = {
             0.0, 0.0, 0.0,
         };
         
-        std::vector<point> original_points;
-        std::vector<point> original_points_norm;
+        std::vector<Point> original_points;
         std::vector<bool> visible;
     };
     struct Camera {
@@ -115,7 +113,6 @@ struct TreeProblem {
     {
         for (size_t i = 0; i < leds.size(); i++) {
             leds[i].original_points.resize(n_cameras);
-            leds[i].original_points_norm.resize(n_cameras);
             leds[i].visible.resize(n_cameras);
         }
     }
@@ -134,19 +131,15 @@ struct TreeProblem {
                     &led_no, &x, &y, &brightness);
             if (ret != 4) break;
             
-            
             double x_norm = x - img_size[0] / 2.0;
             double y_norm = y - img_size[1] / 2.0;
             
-            leds[led_no].original_points[cam_no] = {x, y};
-            leds[led_no].original_points_norm[cam_no] = {x_norm, y_norm};
+            leds[led_no].original_points[cam_no] = Point(x, y);
             
             leds[led_no].visible[cam_no] = brightness > 250.0;
 
-            // std::cout << led_no << " " << x << " " << y << " " << brightness << std::endl;
             if (leds[led_no].visible[cam_no]) {
                 ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
-                // ceres::LossFunction* loss_function = NULL;
 
                 ceres::CostFunction *cf = SnavelyReprojectionError::Create(
                         x_norm,
@@ -171,14 +164,10 @@ struct TreeProblem {
             leds[i].pos[2] = 0.0;
             
             for (size_t j = 0; j < 3; j++) {
-                leds[i].pos[0] = 0.0;
                 problem.SetParameterLowerBound(leds[i].pos, j, leds[i].pos[j] - 0.5);
                 problem.SetParameterUpperBound(leds[i].pos, j, leds[i].pos[j] + 0.5);
             }
         }
-        
-        problem.SetParameterLowerBound(leds[0].pos, 0, leds[0].pos[0] - 0.1);
-        problem.SetParameterUpperBound(leds[0].pos, 0, leds[0].pos[0] + 0.1);
     }
     
     void setup_cameras(double pixel_size_mm, double focal_length_mm) {
@@ -200,9 +189,6 @@ struct TreeProblem {
             problem.SetParameterLowerBound(cameras[i].camera_ext, 5, -0.01);
             problem.SetParameterUpperBound(cameras[i].camera_ext, 5, 0.01);
         }
-        
-        problem.SetParameterLowerBound(cameras[0].camera_ext, 3, cameras[0].camera_ext[3] - 0.1);
-        problem.SetParameterUpperBound(cameras[0].camera_ext, 3, cameras[0].camera_ext[3] + 0.1);
     }
     
     void run_solve() {
@@ -241,23 +227,19 @@ struct TreeProblem {
         for (size_t i = 0; i < leds.size(); i++) {
             if (!leds[i].visible[cam_no]) continue;
             
-            double projected[3];
+            double projected_norm[3];
             project(camera_int,
                     cameras[cam_no].camera_ext,
                     leds[i].pos,
-                    projected);
+                    projected_norm);
             
-            Point projected_unnorm(
-                    projected[0] + img_size[0] / 2.0,
-                    projected[1] + img_size[1] / 2.0
+            Point projected(
+                    projected_norm[0] + img_size[0] / 2.0,
+                    projected_norm[1] + img_size[1] / 2.0
                     );
+            Point &original = leds[i].original_points[cam_no];
             
-            Point original_unnorm(
-                    leds[i].original_points[cam_no][0],
-                    leds[i].original_points[cam_no][1]
-                    );
-            
-            line(im, original_unnorm, projected_unnorm, Scalar(0, 255, 0));
+            line(im, original, projected, Scalar(0, 255, 0));
         }
         
         imwrite(img_out, im);
@@ -280,25 +262,11 @@ int main(int argc, char** argv) {
     p.setup_cameras(24.0 / 1920.0, 35.0);
     p.setup_leds();
     
-    double projected[3];
-    project(p.camera_int,
-            p.cameras[0].camera_ext,
-            p.leds[0].pos,
-            projected);
-    printf("%f %f %f\n", projected[0], projected[1], projected[2]);
-    project(p.camera_int,
-            p.cameras[1].camera_ext,
-            p.leds[0].pos,
-            projected);
-    printf("%f %f %f\n", projected[0], projected[1], projected[2]);
-    // return 0;
-    
     p.run_solve();
     
     printf("cameras\n");
     for (auto &cam : p.cameras)
         printf("%f %f %f\n", cam.camera_ext[3], cam.camera_ext[4], cam.camera_ext[5]);
-    
     
     printf("\nleds\n");
     for (auto &led : p.leds)
