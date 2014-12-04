@@ -1,0 +1,19 @@
+import os.path as path
+
+env = Environment()
+
+video_dir = "input_videos"
+video_names = "0 1 2 3".split()
+
+debug_points = True
+
+for video in video_names:
+    video_f = path.join(video_dir, video+".mov")
+    points_f = path.join("points", video+".csv")
+    debug_dir = path.join("debug", video)
+    bright_f = path.join(debug_dir, "bright.png")
+    if debug_points:
+        env.Command([points_f, bright_f], video_f,
+                "./extract_points.py -d {} $SOURCE $TARGET".format(debug_dir))
+    else:
+        env.Command(points_f, video_f, "./extract_points.py $SOURCE $TARGET")
