@@ -60,7 +60,10 @@ def run(input_file, output_file, debug_dir=None):
     
     start_brightness = get_brightness(cap)
     print "start_brightness: {}".format(start_brightness)
+    
     ret, bright_ref = cap.read()
+    if debug_dir is not None:
+        cv2.imwrite(path.join(debug_dir, "bright.png"), bright_ref)
     
     skip_to_brigheness(cap, start_brightness * 2.0)
     
