@@ -7,3 +7,6 @@ fastled = env.ArduinoLibrary("FastLED", "FastLED")
 
 calibrate = env.Sketch("calibrate", ["calibrate.cpp", serial_lib, fastled, core])
 env.Upload(calibrate, name="upload_calibrate")
+
+flash = env.Sketch("flash", ["flash.cpp", serial_lib, fastled, core])
+env.Upload(flash, name="upload_flash")

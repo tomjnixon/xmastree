@@ -220,6 +220,16 @@ struct TreeProblem {
         fclose(out);
     }
     
+    void write_csv(const char *f_name) {
+        FILE *out = fopen(f_name, "w");
+        
+        fprintf(out, "led,x,y,z\n");
+        for (size_t i = 0; i < leds.size(); i++)
+            fprintf(out, "%d,%f,%f,%f\n", i, leds[i].pos[0], leds[i].pos[1], leds[i].pos[2]);
+        
+        fclose(out);
+    }
+    
     void draw_points(size_t cam_no, const char *img_in, const char *img_out)
     {
         Mat im = imread(img_in);
@@ -273,6 +283,8 @@ int main(int argc, char** argv) {
         printf("%f %f %f\n", led.pos[0], led.pos[1], led.pos[2]);
     
     p.write_obj("tmp/out.obj");
+    
+    p.write_csv("led_positions.csv");
     
     p.draw_points(0, "debug/0/bright.png", "debug/0/projected.png");
     p.draw_points(1, "debug/1/bright.png", "debug/1/projected.png");
