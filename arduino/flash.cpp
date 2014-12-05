@@ -9,12 +9,12 @@
 CRGB leds[NUM_LEDS];
 
 void random_wipe(CRGB from, CRGB to, unsigned long delay_time) {
-    uint8_t axis = random(3);
+    uint8_t axis = random(4);
     int8_t direction = random(0, 2) == 1 ? 1 : -1;
     
     for (int a = -128; a < 128; a++) {
         for (int i = 0; i < NUM_LEDS; i++) {
-            int8_t led_pos = direction * led_positions[i][axis];
+            int8_t led_pos = direction * led_positions[i].axes[axis];
             leds[i] = led_pos <= a ? to : from;
         }
         FastLED.show();

@@ -22,10 +22,20 @@ def write_header(out_f, leds):
         out.write(
 """#ifndef LEDS_H
 #define LEDS_H
-const uint8_t led_positions[][3] = {
+const union {
+    struct {
+        uint8_t x, y, z, rz, ry, rx;
+    };
+    uint8_t axes[3];
+} led_positions[] = {
 """);
         for pos in leds:
-            out.write("    {{{0[0]}, {0[1]}, {0[2]}}},\n".format(pos))
+            axes  = list(pos) + [
+                    int(127 * np.arctan2(pos[0], pos[1]) / np.pi),
+                    int(127 * np.arctan2(pos[0], pos[2]) / np.pi),
+                    int(127 * np.arctan2(pos[1], pos[2]) / np.pi)
+            ]
+            out.write("    {" + ", ".join(map(str, axes)) + "},\n")
 
         out.write(
 """
