@@ -9,7 +9,7 @@ calibrate = env.Sketch("calibrate", ["calibrate.cpp", serial_lib, fastled, core]
 env.Upload(calibrate, name="upload_calibrate")
 
 env.Command("leds.h",
-            "../calibrate/led_positions.csv",
+            ["../calibrate/led_positions.csv", "generate_header.py"],
             "./generate_header.py $SOURCE $TARGET")
 flash = env.Sketch("flash", ["flash.cpp", serial_lib, fastled, core])
 env.Upload(flash, name="upload_flash")
