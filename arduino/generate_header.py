@@ -37,11 +37,11 @@ const union {
             ]
             out.write("    {" + ", ".join(map(str, axes)) + "},\n")
 
-        out.write(
-"""
-};
-#endif
-""");
+        out.write("};\n")
+        
+        out.write("const int8_t axis_min[3] = {" + ", ".join(map(str, leds.min(0))) + "};\n")
+        out.write("const int8_t axis_max[3] = {" + ", ".join(map(str, leds.max(0))) + "};\n")
+        out.write("#endif\n")
 
 def run(in_f, out_f):
     positions = read_positions(in_f)
