@@ -132,7 +132,7 @@ struct TreeProblem {
             if (ret != 4) break;
             
             double x_norm = x - img_size[0] / 2.0;
-            double y_norm = y - img_size[1] / 2.0;
+            double y_norm = -(y - img_size[1] / 2.0);
             
             leds[led_no].original_points[cam_no] = Point(x, y);
             
@@ -177,7 +177,7 @@ struct TreeProblem {
         problem.SetParameterUpperBound(camera_int, 0, camera_int[0] * 1.1);
         
         for (size_t i = 0; i < cameras.size(); i++) {
-            double angle = -2.0 * M_PI * (double)i / 8.0;
+            double angle = 2.0 * M_PI * (double)i / 8.0;
             cameras[i].camera_ext[0] = 0.0;
             cameras[i].camera_ext[1] = 0.0;
             cameras[i].camera_ext[2] = M_PI/2 + angle;
@@ -245,7 +245,7 @@ struct TreeProblem {
             
             Point projected(
                     projected_norm[0] + img_size[0] / 2.0,
-                    projected_norm[1] + img_size[1] / 2.0
+                    img_size[1] / 2.0 - projected_norm[1]
                     );
             Point &original = leds[i].original_points[cam_no];
             
