@@ -24,9 +24,9 @@ def write_header(out_f, leds):
 #define LEDS_H
 const union {
     struct {
-        uint8_t x, y, z, rz, ry, rx;
+        int8_t x, y, z, rz, ry, rx;
     };
-    uint8_t axes[3];
+    int8_t axes[3];
 } led_positions[] = {
 """);
         for pos in leds:
