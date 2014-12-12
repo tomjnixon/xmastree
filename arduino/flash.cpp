@@ -32,12 +32,34 @@ void cube_at(const int8_t *p, int16_t size, CRGB fg, CRGB bg) {
                   ?fg
                   :bg;
     }
-    FastLED.show();
+    FastLED.show(brightness);
 }
 
-void pos_between(const int8_t *a, const int8_t *b, uint8_t pos, int8_t *out) {
+void point_at(const int8_t *p) {
+    for (uint16_t i = 0; i < NUM_LEDS; i++) {
+        int16_t dist = dist_lower_bound(p, led_positions[i].axes);
+        int16_t dist_norm = (dist << 2) + dist;
+        if (dist_norm >= 255)
+            leds[i] = CRGB(0, 0, 0);
+        else {
+            uint8_t brightness = 255 - dist_norm;
+            leds[i] = CRGB(brightness, brightness, brightness);
+        }
+    }
+    FastLED.show(brightness);
+}
+
+int16_t dist(const int8_t *a, const int8_t *b) {
+    int32_t dist = 0;
+    dist += ((int32_t)a[0] - (int32_t)b[0]) * ((int32_t)a[0] - (int32_t)b[0]);
+    dist += ((int32_t)a[1] - (int32_t)b[1]) * ((int32_t)a[1] - (int32_t)b[1]);
+    dist += ((int32_t)a[2] - (int32_t)b[2]) * ((int32_t)a[2] - (int32_t)b[2]);
+    return sqrt(dist);
+}
+
+void pos_between(const int8_t *a, const int8_t *b, int16_t pos, int16_t max_pos, int8_t *out) {
     for (uint8_t i = 0; i < 3; i++)
-        out[i] = map(pos, 0, 255, a[i], b[i]);
+        out[i] = map(pos, 0, max_pos, a[i], b[i]);
 }
 
 void cube_anim() {
@@ -48,13 +70,16 @@ void cube_anim() {
         from = to;
         to = random(NUM_LEDS);
         
-        for (uint16_t d = 0; d < 256; d++) {
+        uint16_t distance = dist(led_positions[from].axes, led_positions[to].axes) * 2;
+        for (uint16_t step = 0; step < distance; step++) {
             int8_t pos[3];
             pos_between(led_positions[from].axes,
                         led_positions[to].axes,
-                        d, pos);
-            cube_at(pos, 30, CRGB::White, CRGB::Black);
+                        step, distance, pos);
+            // cube_at(pos, 35, CRGB::White, CRGB::Black);
+            point_at(pos);
         }
+        update_brightness();
     }
 }
 
