@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
     p.load_points(6, "points/6.csv");
     p.load_points(7, "points/7.csv");
     
-    p.setup_cameras(24.0 / 1920.0, 35.0);
+    p.setup_cameras(24.0 / 1920.0, 19.0);
     p.setup_leds();
     
     p.run_solve();
