@@ -6,9 +6,16 @@
 #define NUM_LEDS 50
 #define DATA_PIN 3
 
+uint8_t brightness = 255;
+
 CRGB leds[NUM_LEDS];
 
+void update_brightness() {
+    brightness = constrain(map(analogRead(A0), 50, 1000, 0, 255), 0, 255);
+}
+
 void random_wipe(CRGB from, CRGB to, unsigned long delay_time) {
+    update_brightness();
     uint8_t axis = random(4);
     int8_t direction = random(0, 2) == 1 ? 1 : -1;
     
@@ -17,7 +24,7 @@ void random_wipe(CRGB from, CRGB to, unsigned long delay_time) {
             int8_t led_pos = direction * led_positions[i].axes[axis];
             leds[i] = led_pos <= a ? to : from;
         }
-        FastLED.show();
+        FastLED.show(brightness);
         delay(delay_time);
     }
 }
